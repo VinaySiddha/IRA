@@ -6,19 +6,36 @@ export default function Card({
   hover = true,
   onClick,
   gradient = false,
+  elevation = 2,
 }) {
+  const elevationClasses = {
+    0: '',
+    1: 'elevation-1',
+    2: 'elevation-2',
+    3: 'elevation-3',
+    4: 'elevation-4',
+    6: 'elevation-6',
+    8: 'elevation-8',
+  };
+
   return (
     <motion.div
-      whileHover={hover ? { y: -4, boxShadow: '0 20px 40px rgba(0,0,0,0.1)' } : {}}
-      transition={{ duration: 0.3 }}
+      whileHover={
+        hover
+          ? {
+              y: -4,
+              transition: { duration: 0.28, ease: [0.4, 0, 0.2, 1] },
+            }
+          : {}
+      }
       onClick={onClick}
       className={`
-        bg-card rounded-2xl shadow-md
-        border border-border/50
-        transition-all duration-300
-        ${hover ? 'cursor-pointer' : ''}
-        ${gradient ? 'hover:border-transparent hover:bg-gradient-to-br hover:from-primary/5 hover:to-secondary/5' : ''}
+        bg-surface rounded-xl
+        ${elevationClasses[elevation] || 'elevation-2'}
+        ${hover ? 'hover-elevate cursor-pointer' : ''}
+        ${gradient ? 'hover:border hover:border-primary/20' : ''}
         ${onClick ? 'cursor-pointer' : ''}
+        transition-md
         ${className}
       `}
     >

@@ -5,7 +5,7 @@ import Button from '../common/Button';
 
 export default function CTASection() {
   return (
-    <section className="relative py-24 overflow-hidden">
+    <section className="relative py-24 overflow-hidden bg-surface">
       {/* Subtle background pattern */}
       <div
         className="absolute inset-0 opacity-[0.02]"
@@ -19,9 +19,17 @@ export default function CTASection() {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="bg-gradient-to-br from-white to-blue-50/50 rounded-3xl p-12 sm:p-16 border border-border/50 shadow-xl"
+          transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+          className="bg-surface rounded-2xl p-12 sm:p-16 elevation-4"
         >
+          {/* Google 4-color top bar */}
+          <div className="flex justify-center gap-0 mb-8">
+            <div className="w-6 h-1 bg-google-blue rounded-l-full" />
+            <div className="w-6 h-1 bg-google-red" />
+            <div className="w-6 h-1 bg-google-yellow" />
+            <div className="w-6 h-1 bg-google-green rounded-r-full" />
+          </div>
+
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-text mb-6">
             Ready to Publish{' '}
             <span className="gradient-text">Your Research?</span>

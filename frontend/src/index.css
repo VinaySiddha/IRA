@@ -1,24 +1,49 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Product+Sans:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@300;400;500;700&display=swap');
 @import "tailwindcss";
 
 @theme {
+  /* DevFest GDG Pune — Exact Color Tokens */
   --color-primary: #1867C0;
   --color-primary-dark: #1F5592;
   --color-secondary: #48A9A6;
   --color-secondary-dark: #018786;
   --color-accent: #2196F3;
-  --color-surface: #ffffff;
-  --color-surface-dark: #121212;
-  --color-background: #f8fafc;
-  --color-card: #ffffff;
-  --color-text: #1a1a2e;
-  --color-text-muted: #64748b;
-  --color-border: #e2e8f0;
+  --color-info: #2196F3;
   --color-success: #4CAF50;
   --color-warning: #FB8C00;
   --color-error: #B00020;
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Google Brand Colors */
+  --color-google-blue: #4285F4;
+  --color-google-red: #EA4335;
+  --color-google-yellow: #FBBC04;
+  --color-google-green: #34A853;
+
+  /* Surface & Background — exact DevFest tokens */
+  --color-surface: #ffffff;
+  --color-surface-light: #EEEEEE;
+  --color-surface-variant: #424242;
+  --color-surface-dark: #212121;
+  --color-background: #ffffff;
+  --color-background-dark: #121212;
+  --color-card: #ffffff;
+
+  /* Text */
+  --color-text: rgba(0, 0, 0, 0.87);
+  --color-text-muted: rgba(0, 0, 0, 0.6);
+  --color-text-disabled: rgba(0, 0, 0, 0.38);
+
+  /* Borders — exact DevFest opacity */
+  --color-border: rgba(0, 0, 0, 0.12);
+
+  /* Font — Google Sans with fallback */
+  --font-sans: 'Google Sans', 'Product Sans', Helvetica, Arial, sans-serif;
 }
+
+/* ========================================
+   BASE STYLES — DevFest exact
+   ======================================== */
 
 html {
   scroll-behavior: smooth;
@@ -30,27 +55,42 @@ body {
   background-color: var(--color-background);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: auto;
 }
 
-/* Custom scrollbar */
+/* ========================================
+   EMPHASIS SYSTEM — DevFest exact opacities
+   ======================================== */
+
+.text-high-emphasis { opacity: 0.87; }
+.text-medium-emphasis { opacity: 0.60; }
+.text-disabled { opacity: 0.38; }
+
+/* ========================================
+   SCROLLBAR
+   ======================================== */
+
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-background);
+  background: var(--color-surface-light);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, var(--color-primary), var(--color-secondary));
+  background: var(--color-primary);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, var(--color-primary-dark), var(--color-secondary-dark));
+  background: var(--color-primary-dark);
 }
 
-/* Gradient text utility */
+/* ========================================
+   GRADIENT UTILITIES
+   ======================================== */
+
 .gradient-text {
   background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
   -webkit-background-clip: text;
@@ -65,7 +105,14 @@ body {
   background-clip: text;
 }
 
-/* Gradient backgrounds */
+/* Google 4-color gradient */
+.gradient-text-google {
+  background: linear-gradient(90deg, #4285F4, #EA4335, #FBBC04, #34A853);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 .gradient-bg {
   background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
 }
@@ -74,15 +121,73 @@ body {
   background: linear-gradient(135deg, var(--color-primary-dark), var(--color-secondary-dark));
 }
 
-/* Glass morphism */
+/* ========================================
+   GLASS MORPHISM — DevFest nav style
+   ======================================== */
+
 .glass {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 
-/* Floating geometric shapes animation */
+/* ========================================
+   MATERIAL DESIGN ELEVATION (shadows)
+   ======================================== */
+
+.elevation-0 { box-shadow: none; }
+.elevation-1 { box-shadow: 0 2px 1px -1px rgba(0,0,0,0.2), 0 1px 1px 0 rgba(0,0,0,0.14), 0 1px 3px 0 rgba(0,0,0,0.12); }
+.elevation-2 { box-shadow: 0 3px 1px -2px rgba(0,0,0,0.2), 0 2px 2px 0 rgba(0,0,0,0.14), 0 1px 5px 0 rgba(0,0,0,0.12); }
+.elevation-3 { box-shadow: 0 3px 3px -2px rgba(0,0,0,0.2), 0 3px 4px 0 rgba(0,0,0,0.14), 0 1px 8px 0 rgba(0,0,0,0.12); }
+.elevation-4 { box-shadow: 0 2px 4px -1px rgba(0,0,0,0.2), 0 4px 5px 0 rgba(0,0,0,0.14), 0 1px 10px 0 rgba(0,0,0,0.12); }
+.elevation-6 { box-shadow: 0 3px 5px -1px rgba(0,0,0,0.2), 0 6px 10px 0 rgba(0,0,0,0.14), 0 1px 18px 0 rgba(0,0,0,0.12); }
+.elevation-8 { box-shadow: 0 5px 5px -3px rgba(0,0,0,0.2), 0 8px 10px 1px rgba(0,0,0,0.14), 0 3px 14px 2px rgba(0,0,0,0.12); }
+.elevation-12 { box-shadow: 0 7px 8px -4px rgba(0,0,0,0.2), 0 12px 17px 2px rgba(0,0,0,0.14), 0 5px 22px 4px rgba(0,0,0,0.12); }
+.elevation-24 { box-shadow: 0 11px 15px -7px rgba(0,0,0,0.2), 0 24px 38px 3px rgba(0,0,0,0.14), 0 9px 46px 8px rgba(0,0,0,0.12); }
+
+/* Hover elevation transition */
+.hover-elevate {
+  transition: box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-elevate:hover {
+  box-shadow: 0 5px 5px -3px rgba(0,0,0,0.2), 0 8px 10px 1px rgba(0,0,0,0.14), 0 3px 14px 2px rgba(0,0,0,0.12);
+}
+
+/* ========================================
+   MATERIAL DESIGN RIPPLE
+   ======================================== */
+
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s ease, height 0.6s ease, opacity 0.6s ease;
+  opacity: 0;
+}
+
+.ripple:active::after {
+  width: 300px;
+  height: 300px;
+  opacity: 0;
+}
+
+/* ========================================
+   FLOATING GEOMETRIC SHAPES ANIMATION
+   ======================================== */
+
 @keyframes float-slow {
   0%, 100% { transform: translateY(0px) rotate(0deg); }
   50% { transform: translateY(-20px) rotate(5deg); }
@@ -108,27 +213,22 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-float-slow {
-  animation: float-slow 8s ease-in-out infinite;
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.animate-float-medium {
-  animation: float-medium 6s ease-in-out infinite;
-}
+.animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
+.animate-float-medium { animation: float-medium 6s ease-in-out infinite; }
+.animate-float-fast { animation: float-fast 4s ease-in-out infinite; }
+.animate-pulse-slow { animation: pulse-slow 4s ease-in-out infinite; }
+.animate-slide-up { animation: slide-up 0.6s ease-out forwards; }
+.animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
 
-.animate-float-fast {
-  animation: float-fast 4s ease-in-out infinite;
-}
+/* ========================================
+   LOADING SPINNER
+   ======================================== */
 
-.animate-pulse-slow {
-  animation: pulse-slow 4s ease-in-out infinite;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.6s ease-out forwards;
-}
-
-/* Loading spinner gradient */
 @keyframes spin-gradient {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -136,4 +236,33 @@ body {
 
 .spinner-gradient {
   animation: spin-gradient 1s linear infinite;
+}
+
+/* ========================================
+   MATERIAL DESIGN TRANSITIONS
+   ======================================== */
+
+.transition-md {
+  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-md-fast {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========================================
+   GOOGLE DOTS DECORATION
+   ======================================== */
+
+.google-dots::before {
+  content: '';
+  display: block;
+  height: 4px;
+  background: linear-gradient(90deg,
+    #4285F4 25%,
+    #EA4335 25% 50%,
+    #FBBC04 50% 75%,
+    #34A853 75%
+  );
+  border-radius: 2px;
 }

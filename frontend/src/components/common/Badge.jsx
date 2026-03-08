@@ -1,10 +1,10 @@
 const variantStyles = {
-  info: 'bg-accent/15 text-accent border-accent/30',
-  success: 'bg-success/15 text-success border-success/30',
-  warning: 'bg-warning/15 text-warning border-warning/30',
-  error: 'bg-error/15 text-error border-error/30',
-  primary: 'bg-primary/15 text-primary border-primary/30',
-  secondary: 'bg-secondary/15 text-secondary border-secondary/30',
+  info: 'bg-info/[0.12] text-info',
+  success: 'bg-success/[0.12] text-success',
+  warning: 'bg-warning/[0.12] text-warning',
+  error: 'bg-error/[0.12] text-error',
+  primary: 'bg-primary/[0.12] text-primary',
+  secondary: 'bg-secondary/[0.12] text-secondary',
 };
 
 export default function Badge({
@@ -14,7 +14,7 @@ export default function Badge({
   size = 'md',
 }) {
   const sizeStyles = {
-    sm: 'px-2 py-0.5 text-xs',
+    sm: 'px-2.5 py-0.5 text-xs',
     md: 'px-3 py-1 text-sm',
     lg: 'px-4 py-1.5 text-base',
   };
@@ -23,7 +23,7 @@ export default function Badge({
     <span
       className={`
         inline-flex items-center
-        rounded-full border font-medium
+        rounded-full font-medium
         ${variantStyles[variant]}
         ${sizeStyles[size]}
         ${className}

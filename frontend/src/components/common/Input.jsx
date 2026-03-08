@@ -21,9 +21,8 @@ export default function Input({
       {label && (
         <label
           className={`
-            block text-sm font-medium mb-1.5 transition-colors duration-200
-            ${focused ? 'text-primary' : 'text-text-muted'}
-            ${error ? 'text-error' : ''}
+            block text-sm font-medium mb-1.5 transition-md-fast
+            ${error ? 'text-error' : focused ? 'text-primary' : 'text-text-muted'}
           `}
         >
           {label}
@@ -34,9 +33,9 @@ export default function Input({
         {Icon && (
           <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
             <Icon
-              className={`w-5 h-5 transition-colors duration-200 ${
-                focused ? 'text-primary' : 'text-text-muted'
-              } ${error ? 'text-error' : ''}`}
+              className={`w-5 h-5 transition-md-fast ${
+                error ? 'text-error' : focused ? 'text-primary' : 'text-text-muted'
+              }`}
             />
           </div>
         )}
@@ -51,24 +50,24 @@ export default function Input({
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           className={`
-            w-full rounded-xl border-2 bg-white
+            w-full rounded-lg border bg-surface
             px-4 py-3 text-text
-            placeholder:text-text-muted/50
-            transition-all duration-200
+            placeholder:text-text-disabled
+            transition-md
             outline-none
-            disabled:opacity-50 disabled:cursor-not-allowed
+            disabled:opacity-[0.38] disabled:cursor-not-allowed
             ${Icon ? 'pl-11' : ''}
             ${
               error
-                ? 'border-error focus:border-error focus:ring-2 focus:ring-error/20'
-                : 'border-border focus:border-primary focus:ring-2 focus:ring-primary/20'
+                ? 'border-error focus:border-error focus:ring-2 focus:ring-error/[0.12]'
+                : 'border-border focus:border-primary focus:ring-2 focus:ring-primary/[0.12]'
             }
           `}
           {...props}
         />
       </div>
       {error && (
-        <p className="mt-1.5 text-sm text-error animate-slide-up">{error}</p>
+        <p className="mt-1.5 text-xs text-error animate-slide-up">{error}</p>
       )}
     </div>
   );
