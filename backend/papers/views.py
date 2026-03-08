@@ -18,6 +18,7 @@ from .serializers import (
 )
 from users.permissions import IsAdmin, IsEditor
 from .pdf_processor import process_paper_pdf
+from . import email_service
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -68,7 +69,13 @@ class PaperViewSet(viewsets.ModelViewSet):
         ).select_related('submitted_by', 'category').prefetch_related('authors')
 
     def perform_create(self, serializer):
-        serializer.save(submitted_by=self.request.user)
+        paper = serializer.save(submitted_by=self.request.user)
+        # Send emails asynchronously (best-effort)
+        try:
+            email_service.send_paper_submitted_email(paper)
+            email_service.send_new_submission_to_editors(paper)
+        except Exception:
+            pass  # Don't fail submission if email fails
 
     def get_permissions(self):
         if self.action in ('destroy', 'process_pdf'):
@@ -172,6 +179,11 @@ class PaymentViewSet(viewsets.GenericViewSet):
         payment.transaction_id = proof_serializer.validated_data['transaction_id']
         payment.status = 'submitted'
         payment.save()
+        try:
+            email_service.send_payment_proof_uploaded_email(payment)
+            email_service.send_payment_proof_to_editors(payment)
+        except Exception:
+            pass
         return Response(PaymentSerializer(payment).data)
 
     @action(detail=False, methods=['post'], url_path='verify')
@@ -197,15 +209,22 @@ class PaymentViewSet(viewsets.GenericViewSet):
             payment.verified_at = timezone.now()
             payment.notes = notes
             payment.save()
-            # Also update paper status
             payment.paper.status = 'payment_verified'
             payment.paper.save()
+            try:
+                email_service.send_payment_verified_email(payment)
+            except Exception:
+                pass
         elif action_type == 'reject':
             payment.status = 'rejected'
             payment.verified_by = request.user
             payment.verified_at = timezone.now()
             payment.notes = notes
             payment.save()
+            try:
+                email_service.send_payment_rejected_email(payment)
+            except Exception:
+                pass
         else:
             return Response(
                 {'detail': 'Invalid action. Use "verify" or "reject".'},

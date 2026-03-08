@@ -15,6 +15,13 @@ class RegisterView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
+        # Send welcome email
+        try:
+            from papers.email_service import send_welcome_email
+            send_welcome_email(user)
+        except Exception:
+            pass
+
         refresh = RefreshToken.for_user(user)
         return Response({
             'user': UserSerializer(user).data,

@@ -65,9 +65,16 @@ class ReviewAssignView(APIView):
         )
 
         # Update paper status to under_review if it's still submitted
-        if paper.status == 'submitted':
+        if paper.status in ('submitted', 'payment_verified'):
             paper.status = 'under_review'
             paper.save()
+
+        # Notify reviewer via email
+        try:
+            from papers.email_service import send_reviewer_assigned_email
+            send_reviewer_assigned_email(review)
+        except Exception:
+            pass
 
         return Response(
             ReviewSerializer(review).data,
@@ -97,6 +104,12 @@ class ReviewSubmitView(APIView):
         serializer = ReviewSubmitSerializer(review, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save(status='completed', completed_at=timezone.now())
+
+        try:
+            from papers.email_service import send_review_submitted_email
+            send_review_submitted_email(review)
+        except Exception:
+            pass
 
         return Response(ReviewSerializer(review).data)
 
@@ -143,6 +156,23 @@ class EditorialDecisionView(APIView):
         }
         paper.status = status_map.get(decision, paper.status)
         paper.save()
+
+        # Send decision emails
+        try:
+            from papers.email_service import (
+                send_paper_accepted_email,
+                send_paper_rejected_email,
+                send_revision_requested_email,
+            )
+            comments = serializer.validated_data.get('comments', '')
+            if decision == 'accept':
+                send_paper_accepted_email(paper)
+            elif decision == 'reject':
+                send_paper_rejected_email(paper, comments)
+            elif decision in ('minor_revision', 'major_revision'):
+                send_revision_requested_email(paper, comments)
+        except Exception:
+            pass
 
         return Response(
             EditorialDecisionSerializer(editorial_decision).data,

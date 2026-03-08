@@ -12,6 +12,9 @@ urlpatterns = [
     path('api/v1/papers/', include('papers.urls')),
     path('api/v1/reviews/', include('reviews.urls')),
     path('api/v1/journal/', include('journal.urls')),
+    path('api/v1/search/', include('search.urls')),
+    path('api/v1/plagiarism/', include('plagiarism.urls')),
+    path('api/v1/publication/', include('publication.urls')),
 ]
 
 # Serve media files in development

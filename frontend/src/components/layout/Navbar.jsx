@@ -11,6 +11,7 @@ import {
   UserPlus,
   LayoutDashboard,
   LogOut,
+  Search,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -34,6 +35,7 @@ export default function Navbar() {
 
   const navLinks = [
     { to: '/', label: 'Home', icon: Home },
+    { to: '/search', label: 'Search', icon: Search },
     { to: '/archive', label: 'Archive', icon: Archive },
     { to: '/submit', label: 'Submit', icon: FileUp },
   ];

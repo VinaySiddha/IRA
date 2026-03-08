@@ -24,6 +24,8 @@ import { PAPER_STATUS_VARIANTS, PAPER_STATUS_LABELS } from '../utils/constants';
 import { useAuth } from '../hooks/useAuth';
 import paperService from '../services/paperService';
 import reviewService from '../services/reviewService';
+import plagiarismService from '../services/plagiarismService';
+import publicationService from '../services/publicationService';
 
 export default function PaperDetail() {
   const { id } = useParams();
@@ -36,12 +38,26 @@ export default function PaperDetail() {
     comments: '',
     recommendation: 'accept',
   });
+  const [plagiarismReport, setPlagiarismReport] = useState(null);
+  const [checkingPlagiarism, setCheckingPlagiarism] = useState(false);
+  const [pubRecord, setPubRecord] = useState(null);
+  const [publishing, setPublishing] = useState(false);
 
   useEffect(() => {
     const fetchPaper = async () => {
       try {
         const data = await paperService.getPaper(id);
         setPaper(data);
+        // Fetch plagiarism report if exists
+        try {
+          const report = await plagiarismService.getReport(id);
+          setPlagiarismReport(report);
+        } catch { /* no report yet */ }
+        // Fetch publication record if editor
+        try {
+          const pub = await publicationService.getStatus(id);
+          setPubRecord(pub);
+        } catch { /* no record yet */ }
       } catch (err) {
         console.error('Failed to fetch paper:', err);
         setPaper(null);
@@ -460,6 +476,171 @@ export default function PaperDetail() {
               >
                 Process PDF (Add IRA Header)
               </Button>
+            </Card>
+          )}
+
+          {/* Plagiarism Report */}
+          {(user?.role === 'editor' || user?.role === 'admin') && (
+            <Card hover={false} className="p-6 mb-6">
+              <h3 className="text-lg font-bold text-text mb-4">Plagiarism Check</h3>
+              {plagiarismReport ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-4">
+                    <div className={`text-3xl font-black ${
+                      plagiarismReport.is_flagged ? 'text-google-red' : 'text-google-green'
+                    }`}>
+                      {plagiarismReport.similarity_score}%
+                    </div>
+                    <div>
+                      <p className="font-semibold text-text">
+                        {plagiarismReport.is_flagged ? 'Flagged — High Similarity' : 'Passed'}
+                      </p>
+                      <p className="text-xs text-text-muted">
+                        Checked against {plagiarismReport.report_data?.total_compared || 0} papers
+                      </p>
+                    </div>
+                  </div>
+                  {plagiarismReport.report_data?.matches?.length > 0 && (
+                    <div className="mt-3">
+                      <p className="text-xs text-text-muted uppercase tracking-wider mb-2">Similar Papers</p>
+                      {plagiarismReport.report_data.matches.slice(0, 5).map((m, i) => (
+                        <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 mb-1">
+                          <span className="text-sm text-text truncate flex-1 mr-2">{m.title}</span>
+                          <span className={`text-sm font-bold ${m.similarity > 30 ? 'text-google-red' : 'text-text-muted'}`}>
+                            {m.similarity}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    loading={checkingPlagiarism}
+                    onClick={async () => {
+                      setCheckingPlagiarism(true);
+                      try {
+                        const report = await plagiarismService.checkPaper(id);
+                        setPlagiarismReport(report);
+                        toast.success('Plagiarism check completed!');
+                      } catch (err) {
+                        toast.error(err.response?.data?.detail || 'Check failed');
+                      } finally {
+                        setCheckingPlagiarism(false);
+                      }
+                    }}
+                  >
+                    Re-run Check
+                  </Button>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-sm text-text-muted mb-3">
+                    Run a plagiarism check against all existing papers in the database.
+                  </p>
+                  <Button
+                    loading={checkingPlagiarism}
+                    onClick={async () => {
+                      setCheckingPlagiarism(true);
+                      try {
+                        const report = await plagiarismService.checkPaper(id);
+                        setPlagiarismReport(report);
+                        toast.success('Plagiarism check completed!');
+                      } catch (err) {
+                        toast.error(err.response?.data?.detail || 'Check failed');
+                      } finally {
+                        setCheckingPlagiarism(false);
+                      }
+                    }}
+                  >
+                    Run Plagiarism Check
+                  </Button>
+                </div>
+              )}
+            </Card>
+          )}
+
+          {/* Publication Pipeline */}
+          {(user?.role === 'editor' || user?.role === 'admin') && pubRecord && (
+            <Card hover={false} className="p-6 mb-6">
+              <h3 className="text-lg font-bold text-text mb-4">Publication Pipeline</h3>
+              <div className="space-y-3">
+                {[
+                  { key: 'doi_generated', label: 'DOI Generated', color: 'google-blue' },
+                  { key: 'pdf_formatted', label: 'PDF Formatted', color: 'google-red' },
+                  { key: 'plagiarism_cleared', label: 'Plagiarism Cleared', color: 'google-green' },
+                ].map((step) => (
+                  <div key={step.key} className="flex items-center justify-between p-3 rounded-xl bg-gray-50">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs ${
+                        pubRecord[step.key] ? `bg-${step.color}` : 'bg-gray-300'
+                      }`}>
+                        {pubRecord[step.key] ? '✓' : '·'}
+                      </div>
+                      <span className="text-sm font-medium text-text">{step.label}</span>
+                    </div>
+                    {!pubRecord[step.key] && step.key === 'doi_generated' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          try {
+                            const data = await publicationService.generateDoi(id);
+                            setPubRecord({ ...pubRecord, doi_generated: true });
+                            const updated = await paperService.getPaper(id);
+                            setPaper(updated);
+                            toast.success(`DOI assigned: ${data.doi}`);
+                          } catch (err) {
+                            toast.error(err.response?.data?.detail || 'Failed');
+                          }
+                        }}
+                      >
+                        Generate DOI
+                      </Button>
+                    )}
+                    {!pubRecord[step.key] && step.key !== 'doi_generated' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={async () => {
+                          try {
+                            const updated = await publicationService.updateStatus(id, { [step.key]: true });
+                            setPubRecord(updated);
+                            toast.success(`${step.label} — Done!`);
+                          } catch (err) {
+                            toast.error(err.response?.data?.detail || 'Failed');
+                          }
+                        }}
+                      >
+                        Mark Done
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {pubRecord.is_ready && paper.status === 'accepted' && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <Button
+                    loading={publishing}
+                    className="bg-google-green hover:bg-google-green/90 w-full"
+                    onClick={async () => {
+                      setPublishing(true);
+                      try {
+                        await publicationService.publish(id);
+                        const updated = await paperService.getPaper(id);
+                        setPaper(updated);
+                        toast.success('Paper published!');
+                      } catch (err) {
+                        toast.error(err.response?.data?.detail || 'Publish failed');
+                      } finally {
+                        setPublishing(false);
+                      }
+                    }}
+                  >
+                    Publish Paper
+                  </Button>
+                </div>
+              )}
             </Card>
           )}
 

@@ -40,6 +40,9 @@ INSTALLED_APPS = [
     'papers',
     'reviews',
     'journal',
+    'search',
+    'plagiarism',
+    'publication',
 ]
 
 MIDDLEWARE = [
@@ -156,3 +159,12 @@ CORS_ALLOWED_ORIGINS = os.getenv(
 ).split(',')
 
 CORS_ALLOW_CREDENTIALS = True
+
+# Email Configuration (Gmail SMTP)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('GMAIL_USER', 'vinaysiddha.20@gmail.com')
+EMAIL_HOST_PASSWORD = os.environ.get('GMAIL_APP_PASSWORD', 'rdavlxhcsyravhix')
+DEFAULT_FROM_EMAIL = 'IRA Journal <vinaysiddha.20@gmail.com>'

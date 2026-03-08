@@ -54,14 +54,23 @@ export default function Register() {
         name: formData.name,
         email: formData.email,
         password: formData.password,
+        password_confirm: formData.confirmPassword,
         institution: formData.institution,
         role: formData.role,
       });
       toast.success('Account created successfully!');
       navigate('/dashboard');
     } catch (err) {
-      const message =
-        err.response?.data?.detail || 'Registration failed. Please try again.';
+      const data = err.response?.data;
+      let message = 'Registration failed. Please try again.';
+      if (data?.detail) {
+        message = data.detail;
+      } else if (data && typeof data === 'object') {
+        // DRF returns field-level errors like { email: ["already exists"] }
+        const firstKey = Object.keys(data)[0];
+        const firstErr = Array.isArray(data[firstKey]) ? data[firstKey][0] : data[firstKey];
+        message = `${firstKey}: ${firstErr}`;
+      }
       toast.error(message);
     } finally {
       setLoading(false);

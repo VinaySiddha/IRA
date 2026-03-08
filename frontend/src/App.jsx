@@ -10,6 +10,7 @@ import Register from './pages/Register';
 import PaperSubmit from './pages/PaperSubmit';
 import PaperDetail from './pages/PaperDetail';
 import Payment from './pages/Payment';
+import Search from './pages/Search';
 import Archive from './pages/Archive';
 import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
@@ -73,6 +74,14 @@ function AppRoutes() {
                 <Payment />
               </Layout>
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/search"
+          element={
+            <Layout>
+              <Search />
+            </Layout>
           }
         />
         <Route
