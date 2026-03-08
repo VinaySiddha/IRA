@@ -25,9 +25,15 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      const hadToken = !!localStorage.getItem('ira_token');
       localStorage.removeItem('ira_token');
+      localStorage.removeItem('ira_refresh');
       localStorage.removeItem('ira_user');
-      window.location.href = '/login';
+      // Only redirect if user was previously authenticated (token expired)
+      // Don't redirect for unauthenticated API calls (e.g. public pages)
+      if (hadToken) {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

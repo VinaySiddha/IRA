@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -18,7 +18,7 @@ import Card from '../components/common/Card';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
-import { CATEGORIES } from '../utils/constants';
+import paperService from '../services/paperService';
 
 const steps = [
   { id: 1, title: 'Paper Details', icon: FileText },
@@ -32,6 +32,7 @@ export default function PaperSubmit() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [categories, setCategories] = useState([]);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -41,6 +42,18 @@ export default function PaperSubmit() {
     authors: [{ name: '', affiliation: '', email: '', corresponding: true }],
     file: null,
   });
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await paperService.getCategories();
+        setCategories(data);
+      } catch {
+        toast.error('Failed to load categories');
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -102,15 +115,42 @@ export default function PaperSubmit() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      toast.success('Paper submitted successfully!');
-      navigate('/dashboard');
-    } catch {
-      toast.error('Submission failed. Please try again.');
+      const data = new FormData();
+      data.append('title', formData.title);
+      data.append('abstract', formData.abstract);
+      data.append('keywords', formData.keywords);
+      data.append('category', formData.category);
+      data.append('corresponding_email', formData.authors.find(a => a.corresponding)?.email || '');
+      if (formData.file) {
+        data.append('pdf_file', formData.file);
+      }
+
+      const paper = await paperService.submitPaper(data);
+
+      // Add authors to the paper
+      for (let i = 0; i < formData.authors.length; i++) {
+        const author = formData.authors[i];
+        await paperService.addAuthor(paper.id, {
+          author_name: author.name,
+          affiliation: author.affiliation,
+          author_order: i + 1,
+          is_corresponding: author.corresponding,
+        });
+      }
+
+      toast.success('Paper submitted! Please complete payment.');
+      navigate(`/papers/${paper.id}/payment`);
+    } catch (err) {
+      const msg = err.response?.data?.detail || err.response?.data?.title?.[0] || 'Submission failed. Please try again.';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getCategoryName = (categoryId) => {
+    const cat = categories.find((c) => String(c.id) === String(categoryId));
+    return cat ? cat.name : categoryId;
   };
 
   return (
@@ -232,9 +272,9 @@ export default function PaperSubmit() {
                       className="w-full rounded-xl border-2 border-border bg-white px-4 py-3 text-text transition-all duration-200 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 cursor-pointer"
                     >
                       <option value="">Select a category</option>
-                      {CATEGORIES.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
                         </option>
                       ))}
                     </select>
@@ -421,7 +461,7 @@ export default function PaperSubmit() {
                       <p>
                         <span className="font-medium text-text">Category:</span>{' '}
                         <Badge variant="primary" size="sm">
-                          {formData.category || 'Not selected'}
+                          {getCategoryName(formData.category) || 'Not selected'}
                         </Badge>
                       </p>
                       <p>

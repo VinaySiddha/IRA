@@ -6,19 +6,18 @@ export default function Footer() {
 
   return (
     <footer className="relative bg-surface-dark text-white">
-      {/* Google 4-color top bar */}
-      <div className="flex">
-        <div className="flex-1 h-1 bg-google-blue" />
-        <div className="flex-1 h-1 bg-google-red" />
-        <div className="flex-1 h-1 bg-google-yellow" />
-        <div className="flex-1 h-1 bg-google-green" />
-      </div>
+      {/* Google 4-color top strip */}
+      <div className="h-1 google-gradient-line" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* About IRA */}
           <div>
-            <h3 className="text-2xl font-bold gradient-text mb-4">IRA</h3>
+            <div className="flex items-center gap-0.5 mb-4">
+              <span className="text-2xl font-bold text-google-blue">I</span>
+              <span className="text-2xl font-bold text-google-red">R</span>
+              <span className="text-2xl font-bold text-google-green">A</span>
+            </div>
             <p className="text-white/[0.6] text-sm leading-relaxed mb-4">
               International Research Archive is a modern platform for academic
               publishing, peer review, and open access research dissemination.
@@ -51,7 +50,7 @@ export default function Footer() {
                 <li key={link.to}>
                   <Link
                     to={link.to}
-                    className="text-white/[0.6] hover:text-secondary text-sm transition-md"
+                    className="text-white/[0.6] hover:text-google-blue text-sm transition-md"
                   >
                     {link.label}
                   </Link>
@@ -76,7 +75,7 @@ export default function Footer() {
                 <li key={item}>
                   <a
                     href="#"
-                    className="text-white/[0.6] hover:text-secondary text-sm transition-md"
+                    className="text-white/[0.6] hover:text-google-blue text-sm transition-md"
                   >
                     {item}
                   </a>
@@ -92,15 +91,15 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
-                <Mail className="w-5 h-5 text-secondary mt-0.5 shrink-0" />
+                <Mail className="w-5 h-5 text-google-blue mt-0.5 shrink-0" />
                 <span className="text-white/[0.6] text-sm">contact@ira-journal.org</span>
               </li>
               <li className="flex items-start gap-3">
-                <Phone className="w-5 h-5 text-secondary mt-0.5 shrink-0" />
+                <Phone className="w-5 h-5 text-google-green mt-0.5 shrink-0" />
                 <span className="text-white/[0.6] text-sm">+1 (555) 123-4567</span>
               </li>
               <li className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-secondary mt-0.5 shrink-0" />
+                <MapPin className="w-5 h-5 text-google-red mt-0.5 shrink-0" />
                 <span className="text-white/[0.6] text-sm">
                   123 Research Avenue, Academic District, Cambridge, MA 02139
                 </span>

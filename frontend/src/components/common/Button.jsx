@@ -3,17 +3,17 @@ import { Loader2 } from 'lucide-react';
 
 const variants = {
   primary:
-    'bg-primary text-white elevation-2 hover:elevation-4 hover:bg-primary-dark',
+    'bg-google-blue text-white hover:bg-primary-dark elevation-1',
   secondary:
-    'bg-secondary text-white elevation-2 hover:elevation-4 hover:bg-secondary-dark',
+    'bg-google-green text-white hover:bg-secondary-dark elevation-1',
   outline:
-    'border-2 border-primary text-primary hover:bg-primary/[0.04]',
+    'border-2 border-google-blue text-google-blue hover:bg-google-blue/[0.04]',
   ghost:
-    'text-primary hover:bg-primary/[0.04]',
+    'text-google-blue hover:bg-google-blue/[0.04]',
   danger:
-    'bg-error text-white elevation-2 hover:elevation-4',
+    'bg-google-red text-white hover:opacity-90 elevation-1',
   tonal:
-    'bg-primary/[0.12] text-primary hover:bg-primary/[0.2]',
+    'bg-google-blue/[0.08] text-google-blue hover:bg-google-blue/[0.16]',
 };
 
 const sizes = {

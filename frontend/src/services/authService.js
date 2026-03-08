@@ -2,28 +2,31 @@ import api from './api';
 
 export const authService = {
   async login(email, password) {
-    const response = await api.post('/auth/login/', { email, password });
-    const { token, user } = response.data;
-    localStorage.setItem('ira_token', token);
+    const response = await api.post('/users/login/', { email, password });
+    const { tokens, user } = response.data;
+    localStorage.setItem('ira_token', tokens.access);
+    localStorage.setItem('ira_refresh', tokens.refresh);
     localStorage.setItem('ira_user', JSON.stringify(user));
     return response.data;
   },
 
   async register(userData) {
-    const response = await api.post('/auth/register/', userData);
-    const { token, user } = response.data;
-    localStorage.setItem('ira_token', token);
+    const response = await api.post('/users/register/', userData);
+    const { tokens, user } = response.data;
+    localStorage.setItem('ira_token', tokens.access);
+    localStorage.setItem('ira_refresh', tokens.refresh);
     localStorage.setItem('ira_user', JSON.stringify(user));
     return response.data;
   },
 
   logout() {
     localStorage.removeItem('ira_token');
+    localStorage.removeItem('ira_refresh');
     localStorage.removeItem('ira_user');
   },
 
   async getProfile() {
-    const response = await api.get('/auth/profile/');
+    const response = await api.get('/users/profile/');
     return response.data;
   },
 

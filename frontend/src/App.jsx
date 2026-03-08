@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import PaperSubmit from './pages/PaperSubmit';
 import PaperDetail from './pages/PaperDetail';
+import Payment from './pages/Payment';
 import Archive from './pages/Archive';
 import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
@@ -62,6 +63,16 @@ function AppRoutes() {
             <Layout>
               <PaperDetail />
             </Layout>
+          }
+        />
+        <Route
+          path="/papers/:id/payment"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Payment />
+              </Layout>
+            </ProtectedRoute>
           }
         />
         <Route

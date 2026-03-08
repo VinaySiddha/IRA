@@ -20,8 +20,10 @@ import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
 import Input from '../components/common/Input';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import { PLACEHOLDER_PAPERS, PAPER_STATUS_VARIANTS, PAPER_STATUS_LABELS } from '../utils/constants';
+import { PAPER_STATUS_VARIANTS, PAPER_STATUS_LABELS } from '../utils/constants';
 import { useAuth } from '../hooks/useAuth';
+import paperService from '../services/paperService';
+import reviewService from '../services/reviewService';
 
 export default function PaperDetail() {
   const { id } = useParams();
@@ -36,27 +38,88 @@ export default function PaperDetail() {
   });
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const found = PLACEHOLDER_PAPERS.find((p) => p.id === parseInt(id));
-      setPaper(found || null);
-      setLoading(false);
-    }, 500);
+    const fetchPaper = async () => {
+      try {
+        const data = await paperService.getPaper(id);
+        setPaper(data);
+      } catch (err) {
+        console.error('Failed to fetch paper:', err);
+        setPaper(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPaper();
   }, [id]);
+
+  const getKeywords = () => {
+    if (!paper?.keywords) return [];
+    return typeof paper.keywords === 'string'
+      ? paper.keywords.split(',').map((k) => k.trim())
+      : paper.keywords;
+  };
+
+  const getAuthorNames = () => {
+    if (!paper?.authors) return [];
+    return paper.authors.map((a) => a.author_name);
+  };
+
+  const getDisplayDate = () => {
+    return paper.published_at || paper.created_at;
+  };
 
   const handleCopyCitation = () => {
     if (!paper) return;
-    const citation = `${paper.authors.map((a) => a.name).join(', ')}. "${paper.title}." International Research Archive, Vol. ${paper.volume}, Issue ${paper.issue}, ${new Date(paper.date).getFullYear()}. ${paper.doi ? `DOI: ${paper.doi}` : ''}`;
+    const citation = paper.citation_text
+      ? paper.citation_text
+      : `${getAuthorNames().join(', ')}. "${paper.title}." International Research Archive${paper.volume ? `, Vol. ${paper.volume}` : ''}${paper.issue ? `, Issue ${paper.issue}` : ''}${getDisplayDate() ? `, ${new Date(getDisplayDate()).getFullYear()}` : ''}.${paper.doi ? ` DOI: ${paper.doi}` : ''}`;
     navigator.clipboard.writeText(citation);
     setCopied(true);
     toast.success('Citation copied to clipboard!');
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSubmitReview = (e) => {
+  const handleSubmitReview = async (e) => {
     e.preventDefault();
-    toast.success('Review submitted successfully!');
-    setReviewForm({ rating: 5, comments: '', recommendation: 'accept' });
+    try {
+      // Find user's review assignment for this paper
+      const assignments = await reviewService.myAssignments();
+      const myReview = assignments.find((r) => r.paper === parseInt(id));
+      if (!myReview) {
+        toast.error('No review assignment found for this paper');
+        return;
+      }
+      await reviewService.submit(myReview.id, {
+        comments: reviewForm.comments,
+        score: reviewForm.rating * 2, // Convert 1-5 stars to 2-10 score
+        recommendation:
+          reviewForm.recommendation === 'revise'
+            ? 'minor_revision'
+            : reviewForm.recommendation,
+      });
+      toast.success('Review submitted successfully!');
+      setReviewForm({ rating: 5, comments: '', recommendation: 'accept' });
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Failed to submit review');
+    }
+  };
+
+  const handleDecision = async (decision) => {
+    try {
+      await reviewService.createDecision({
+        paper: parseInt(id),
+        decision: decision,
+        comments: '',
+      });
+      toast.success(
+        `Paper ${decision === 'accept' ? 'accepted' : decision === 'reject' ? 'rejected' : 'revision requested'}!`
+      );
+      // Refresh paper data
+      const updated = await paperService.getPaper(id);
+      setPaper(updated);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Decision failed');
+    }
   };
 
   if (loading) {
@@ -81,8 +144,11 @@ export default function PaperDetail() {
     );
   }
 
+  const keywords = getKeywords();
+  const displayDate = getDisplayDate();
+
   return (
-    <div className="min-h-screen bg-background py-12 px-4">
+    <div className="min-h-screen bg-surface-light py-12 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Back button */}
         <Link
@@ -104,7 +170,9 @@ export default function PaperDetail() {
               <Badge variant={PAPER_STATUS_VARIANTS[paper.status] || 'info'}>
                 {PAPER_STATUS_LABELS[paper.status] || paper.status}
               </Badge>
-              <Badge variant="primary">{paper.category}</Badge>
+              <Badge variant="primary">
+                {paper.category?.name || paper.category}
+              </Badge>
               {paper.doi && (
                 <span className="text-xs text-text-muted font-mono bg-gray-100 px-2 py-1 rounded">
                   {paper.doi}
@@ -115,50 +183,63 @@ export default function PaperDetail() {
               {paper.title}
             </h1>
             <div className="flex items-center gap-4 text-sm text-text-muted">
-              <span className="flex items-center gap-1.5">
-                <Calendar className="w-4 h-4" />
-                {new Date(paper.date).toLocaleDateString('en-US', {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric',
-                })}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <BookOpen className="w-4 h-4" />
-                Vol. {paper.volume}, Issue {paper.issue}
-              </span>
+              {displayDate && (
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4" />
+                  {new Date(displayDate).toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </span>
+              )}
+              {paper.volume && paper.issue && (
+                <span className="flex items-center gap-1.5">
+                  <BookOpen className="w-4 h-4" />
+                  Vol. {paper.volume}, Issue {paper.issue}
+                </span>
+              )}
             </div>
           </div>
 
           {/* Authors */}
-          <Card hover={false} className="p-6 mb-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-text-muted mb-4 flex items-center gap-2">
-              <UsersIcon className="w-4 h-4" />
-              Authors
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {paper.authors.map((author, index) => (
-                <div
-                  key={index}
-                  className="flex items-start gap-3 p-3 rounded-xl bg-gray-50"
-                >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-sm shrink-0">
-                    {author.name
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')}
+          {paper.authors && paper.authors.length > 0 && (
+            <Card hover={false} className="p-6 mb-6">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-text-muted mb-4 flex items-center gap-2">
+                <UsersIcon className="w-4 h-4" />
+                Authors
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {paper.authors.map((author, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-3 p-3 rounded-xl bg-gray-50"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-sm shrink-0">
+                      {author.author_name
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-text text-sm">
+                        {author.author_name}
+                        {author.is_corresponding && (
+                          <span className="ml-1 text-xs text-primary">*</span>
+                        )}
+                      </p>
+                      {author.affiliation && (
+                        <p className="text-xs text-text-muted flex items-center gap-1">
+                          <Building2 className="w-3 h-3" />
+                          {author.affiliation}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold text-text text-sm">{author.name}</p>
-                    <p className="text-xs text-text-muted flex items-center gap-1">
-                      <Building2 className="w-3 h-3" />
-                      {author.affiliation}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
+                ))}
+              </div>
+            </Card>
+          )}
 
           {/* Abstract */}
           <Card hover={false} className="p-6 mb-6">
@@ -169,25 +250,50 @@ export default function PaperDetail() {
           </Card>
 
           {/* Keywords */}
-          <Card hover={false} className="p-6 mb-6">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-text-muted mb-4 flex items-center gap-2">
-              <Tag className="w-4 h-4" />
-              Keywords
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {paper.keywords.map((keyword, index) => (
-                <Badge key={index} variant="secondary" size="sm">
-                  {keyword}
-                </Badge>
-              ))}
+          {keywords.length > 0 && (
+            <Card hover={false} className="p-6 mb-6">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-text-muted mb-4 flex items-center gap-2">
+                <Tag className="w-4 h-4" />
+                Keywords
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {keywords.map((keyword, index) => (
+                  <Badge key={index} variant="secondary" size="sm">
+                    {keyword}
+                  </Badge>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {/* Payment Banner */}
+          {paper.status === 'payment_pending' && user?.id === paper.submitted_by?.id && (
+            <div className="mb-6 p-4 rounded-xl bg-google-yellow/10 border border-google-yellow/30 flex items-center justify-between gap-4">
+              <div>
+                <p className="font-semibold text-text">Payment Required</p>
+                <p className="text-sm text-text-muted">Complete payment to proceed with your submission.</p>
+              </div>
+              <Link to={`/papers/${id}/payment`}>
+                <Button size="sm" className="bg-google-yellow text-white hover:bg-google-yellow/90">
+                  Pay Now
+                </Button>
+              </Link>
             </div>
-          </Card>
+          )}
 
           {/* Actions */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <Button icon={Download} size="lg" className="w-full">
-              Download PDF
-            </Button>
+            {paper.pdf_file ? (
+              <a href={paper.pdf_file} target="_blank" rel="noopener noreferrer" className="w-full">
+                <Button icon={Download} size="lg" className="w-full">
+                  Download PDF
+                </Button>
+              </a>
+            ) : (
+              <Button icon={Download} size="lg" className="w-full" disabled>
+                Download PDF
+              </Button>
+            )}
             <Button
               variant="outline"
               icon={copied ? Check : Copy}
@@ -205,10 +311,18 @@ export default function PaperDetail() {
               Citation
             </h3>
             <div className="bg-gray-50 rounded-xl p-4 font-mono text-sm text-text-muted leading-relaxed">
-              {paper.authors.map((a) => a.name).join(', ')}. &quot;{paper.title}.&quot;{' '}
-              <em>International Research Archive</em>, Vol. {paper.volume}, Issue{' '}
-              {paper.issue}, {new Date(paper.date).getFullYear()}.
-              {paper.doi && ` DOI: ${paper.doi}`}
+              {paper.citation_text ? (
+                paper.citation_text
+              ) : (
+                <>
+                  {getAuthorNames().join(', ')}. &quot;{paper.title}.&quot;{' '}
+                  <em>International Research Archive</em>
+                  {paper.volume && <>, Vol. {paper.volume}</>}
+                  {paper.issue && <>, Issue {paper.issue}</>}
+                  {displayDate && <>, {new Date(displayDate).getFullYear()}</>}.
+                  {paper.doi && ` DOI: ${paper.doi}`}
+                </>
+              )}
             </div>
           </Card>
 
@@ -299,26 +413,76 @@ export default function PaperDetail() {
             </Card>
           )}
 
+          {/* Editor: Payment Verification */}
+          {(user?.role === 'editor' || user?.role === 'admin') && paper.payment?.status === 'submitted' && (
+            <Card hover={false} className="p-6 mb-6">
+              <h3 className="text-lg font-bold text-text mb-4">Verify Payment</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div className="p-3 rounded-xl bg-gray-50">
+                  <p className="text-xs text-text-muted">Transaction ID</p>
+                  <p className="font-semibold text-text">{paper.payment.transaction_id || 'N/A'}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-gray-50">
+                  <p className="text-xs text-text-muted">Amount</p>
+                  <p className="font-semibold text-text">₹{parseFloat(paper.payment.amount).toFixed(2)}</p>
+                </div>
+              </div>
+              {paper.payment.payment_proof && (
+                <a href={paper.payment.payment_proof} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm mb-4 block">
+                  View Payment Proof Screenshot
+                </a>
+              )}
+              <Link to={`/papers/${id}/payment`}>
+                <Button size="sm">Review Payment</Button>
+              </Link>
+            </Card>
+          )}
+
+          {/* Editor: Process PDF */}
+          {(user?.role === 'editor' || user?.role === 'admin') && paper.pdf_file && (
+            <Card hover={false} className="p-6 mb-6">
+              <h3 className="text-lg font-bold text-text mb-4">Paper Processing</h3>
+              <p className="text-sm text-text-muted mb-4">
+                Add IRA journal header, footer, and branding to the paper PDF.
+              </p>
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  try {
+                    await paperService.processPdf(id);
+                    toast.success('PDF processed with IRA branding!');
+                    const updated = await paperService.getPaper(id);
+                    setPaper(updated);
+                  } catch (err) {
+                    toast.error(err.response?.data?.detail || 'PDF processing failed');
+                  }
+                }}
+              >
+                Process PDF (Add IRA Header)
+              </Button>
+            </Card>
+          )}
+
           {/* Editor Decision (for editors) */}
-          {user?.role === 'editor' && (
+          {(user?.role === 'editor' || user?.role === 'admin') && (
             <Card hover={false} className="p-6">
               <h3 className="text-lg font-bold text-text mb-6">Editorial Decision</h3>
               <div className="flex flex-wrap gap-3">
                 <Button
                   variant="primary"
-                  onClick={() => toast.success('Paper accepted!')}
+                  onClick={() => handleDecision('accept')}
                 >
                   Accept
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => toast.success('Revision requested')}
+                  onClick={() => handleDecision('minor_revision')}
                 >
                   Request Revision
                 </Button>
                 <Button
                   variant="danger"
-                  onClick={() => toast.success('Paper rejected')}
+                  onClick={() => handleDecision('reject')}
                 >
                   Reject
                 </Button>

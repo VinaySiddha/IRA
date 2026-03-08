@@ -20,4 +20,13 @@ urlpatterns = [
         'patch': 'partial_update',
         'delete': 'destroy',
     }), name='paper-author-detail'),
+    path('<int:paper_pk>/payment/', views.PaymentViewSet.as_view({
+        'get': 'retrieve',
+    }), name='paper-payment'),
+    path('<int:paper_pk>/payment/upload-proof/', views.PaymentViewSet.as_view({
+        'post': 'upload_proof',
+    }), name='paper-payment-upload'),
+    path('<int:paper_pk>/payment/verify/', views.PaymentViewSet.as_view({
+        'post': 'verify',
+    }), name='paper-payment-verify'),
 ]

@@ -1,10 +1,10 @@
 const variantStyles = {
-  info: 'bg-info/[0.12] text-info',
-  success: 'bg-success/[0.12] text-success',
-  warning: 'bg-warning/[0.12] text-warning',
-  error: 'bg-error/[0.12] text-error',
-  primary: 'bg-primary/[0.12] text-primary',
-  secondary: 'bg-secondary/[0.12] text-secondary',
+  info: 'bg-google-blue/[0.08] text-google-blue',
+  success: 'bg-google-green/[0.08] text-google-green',
+  warning: 'bg-google-yellow/[0.12] text-[#E37400]',
+  error: 'bg-google-red/[0.08] text-google-red',
+  primary: 'bg-google-blue/[0.08] text-google-blue',
+  secondary: 'bg-google-green/[0.08] text-google-green',
 };
 
 export default function Badge({

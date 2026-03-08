@@ -17,6 +17,8 @@ class Category(models.Model):
 class Paper(models.Model):
     STATUS_CHOICES = [
         ('submitted', 'Submitted'),
+        ('payment_pending', 'Payment Pending'),
+        ('payment_verified', 'Payment Verified'),
         ('under_review', 'Under Review'),
         ('revision_requested', 'Revision Requested'),
         ('revised', 'Revised'),
@@ -48,6 +50,35 @@ class Paper(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Payment(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('submitted', 'Proof Submitted'),
+        ('verified', 'Verified'),
+        ('rejected', 'Rejected'),
+    ]
+
+    paper = models.OneToOneField(Paper, on_delete=models.CASCADE, related_name='payment')
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=500.00)
+    upi_number = models.CharField(max_length=15, default='+919849372827')
+    payment_proof = models.ImageField(upload_to='payments/proofs/%Y/%m/', blank=True)
+    transaction_id = models.CharField(max_length=255, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='verified_payments'
+    )
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Payment for {self.paper.title} - {self.status}"
 
 
 class PaperAuthor(models.Model):
