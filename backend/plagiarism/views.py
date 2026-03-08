@@ -37,8 +37,9 @@ class CheckPlagiarismView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Run plagiarism check
-        result = check_plagiarism(paper)
+        # Run plagiarism check (include_web_check if requested)
+        include_web = request.data.get('include_web_check', False)
+        result = check_plagiarism(paper, include_web_check=include_web)
 
         # Save or update the report
         report, _created = PlagiarismReport.objects.update_or_create(
@@ -47,8 +48,15 @@ class CheckPlagiarismView(APIView):
                 'similarity_score': result['similarity_score'],
                 'is_flagged': result['is_flagged'],
                 'report_data': {
+                    'document_similarity': result['document_similarity'],
+                    'sentence_plagiarism_rate': result['sentence_plagiarism_rate'],
                     'matches': result['matches'],
+                    'flagged_sentences': result['flagged_sentences'],
+                    'web_matches': result['web_matches'],
                     'total_compared': result['total_compared'],
+                    'total_sentences_checked': result['total_sentences_checked'],
+                    'total_sentences_flagged': result['total_sentences_flagged'],
+                    'text_extracted_length': result['text_extracted_length'],
                 },
             },
         )

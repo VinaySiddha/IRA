@@ -1,8 +1,10 @@
 import api from './api';
 
 const plagiarismService = {
-  async checkPaper(paperId) {
-    const response = await api.post(`/plagiarism/check/${paperId}/`);
+  async checkPaper(paperId, includeWebCheck = false) {
+    const response = await api.post(`/plagiarism/check/${paperId}/`, {
+      include_web_check: includeWebCheck,
+    });
     return response.data;
   },
 

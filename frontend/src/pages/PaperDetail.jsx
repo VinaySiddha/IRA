@@ -484,24 +484,47 @@ export default function PaperDetail() {
             <Card hover={false} className="p-6 mb-6">
               <h3 className="text-lg font-bold text-text mb-4">Plagiarism Check</h3>
               {plagiarismReport ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
+                  {/* Overall Score */}
                   <div className="flex items-center gap-4">
-                    <div className={`text-3xl font-black ${
+                    <div className={`text-4xl font-black ${
                       plagiarismReport.is_flagged ? 'text-google-red' : 'text-google-green'
                     }`}>
                       {plagiarismReport.similarity_score}%
                     </div>
                     <div>
                       <p className="font-semibold text-text">
-                        {plagiarismReport.is_flagged ? 'Flagged — High Similarity' : 'Passed'}
+                        {plagiarismReport.is_flagged ? 'Flagged — High Similarity' : 'Passed — Original Content'}
                       </p>
                       <p className="text-xs text-text-muted">
-                        Checked against {plagiarismReport.report_data?.total_compared || 0} papers
+                        Full PDF text analyzed ({plagiarismReport.report_data?.text_extracted_length?.toLocaleString() || 0} chars)
                       </p>
                     </div>
                   </div>
+
+                  {/* Breakdown Stats */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-3 rounded-xl bg-blue-50 text-center">
+                      <p className="text-lg font-bold text-google-blue">{plagiarismReport.report_data?.document_similarity || 0}%</p>
+                      <p className="text-xs text-text-muted">Doc Similarity</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-red-50 text-center">
+                      <p className="text-lg font-bold text-google-red">{plagiarismReport.report_data?.sentence_plagiarism_rate || 0}%</p>
+                      <p className="text-xs text-text-muted">Passage Match</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-yellow-50 text-center">
+                      <p className="text-lg font-bold text-google-yellow">{plagiarismReport.report_data?.total_sentences_flagged || 0}</p>
+                      <p className="text-xs text-text-muted">Flagged Passages</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-green-50 text-center">
+                      <p className="text-lg font-bold text-google-green">{plagiarismReport.report_data?.total_compared || 0}</p>
+                      <p className="text-xs text-text-muted">Papers Compared</p>
+                    </div>
+                  </div>
+
+                  {/* Similar Papers */}
                   {plagiarismReport.report_data?.matches?.length > 0 && (
-                    <div className="mt-3">
+                    <div>
                       <p className="text-xs text-text-muted uppercase tracking-wider mb-2">Similar Papers</p>
                       {plagiarismReport.report_data.matches.slice(0, 5).map((m, i) => (
                         <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 mb-1">
@@ -513,48 +536,125 @@ export default function PaperDetail() {
                       ))}
                     </div>
                   )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    loading={checkingPlagiarism}
-                    onClick={async () => {
-                      setCheckingPlagiarism(true);
-                      try {
-                        const report = await plagiarismService.checkPaper(id);
-                        setPlagiarismReport(report);
-                        toast.success('Plagiarism check completed!');
-                      } catch (err) {
-                        toast.error(err.response?.data?.detail || 'Check failed');
-                      } finally {
-                        setCheckingPlagiarism(false);
-                      }
-                    }}
-                  >
-                    Re-run Check
-                  </Button>
+
+                  {/* Flagged Passages */}
+                  {plagiarismReport.report_data?.flagged_sentences?.length > 0 && (
+                    <div>
+                      <p className="text-xs text-text-muted uppercase tracking-wider mb-2">Flagged Passages</p>
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {plagiarismReport.report_data.flagged_sentences.slice(0, 5).map((f, i) => (
+                          <div key={i} className="p-3 rounded-lg bg-red-50 border border-red-100">
+                            <p className="text-xs text-red-700 mb-1">
+                              <strong>{f.similarity}% match</strong> with "{f.source_paper_title}"
+                            </p>
+                            <p className="text-xs text-text-muted italic">"{f.submitted_sentence}..."</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Web Matches */}
+                  {plagiarismReport.report_data?.web_matches?.length > 0 && (
+                    <div>
+                      <p className="text-xs text-text-muted uppercase tracking-wider mb-2">Found on Web</p>
+                      {plagiarismReport.report_data.web_matches.map((w, i) => (
+                        <div key={i} className="p-2 rounded-lg bg-yellow-50 border border-yellow-100 mb-1">
+                          <p className="text-xs text-yellow-800 italic">"{w.sentence}..."</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      loading={checkingPlagiarism}
+                      onClick={async () => {
+                        setCheckingPlagiarism(true);
+                        try {
+                          const report = await plagiarismService.checkPaper(id);
+                          setPlagiarismReport(report);
+                          toast.success('Plagiarism check completed!');
+                        } catch (err) {
+                          toast.error(err.response?.data?.detail || 'Check failed');
+                        } finally {
+                          setCheckingPlagiarism(false);
+                        }
+                      }}
+                    >
+                      Re-run Check
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      loading={checkingPlagiarism}
+                      onClick={async () => {
+                        setCheckingPlagiarism(true);
+                        try {
+                          const report = await plagiarismService.checkPaper(id, true);
+                          setPlagiarismReport(report);
+                          toast.success('Full check with web search completed!');
+                        } catch (err) {
+                          toast.error(err.response?.data?.detail || 'Check failed');
+                        } finally {
+                          setCheckingPlagiarism(false);
+                        }
+                      }}
+                    >
+                      Re-run + Web Check
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div>
-                  <p className="text-sm text-text-muted mb-3">
-                    Run a plagiarism check against all existing papers in the database.
+                  <p className="text-sm text-text-muted mb-4">
+                    Extracts full text from PDF and runs multi-level analysis:
                   </p>
-                  <Button
-                    loading={checkingPlagiarism}
-                    onClick={async () => {
-                      setCheckingPlagiarism(true);
-                      try {
-                        const report = await plagiarismService.checkPaper(id);
-                        setPlagiarismReport(report);
-                        toast.success('Plagiarism check completed!');
-                      } catch (err) {
-                        toast.error(err.response?.data?.detail || 'Check failed');
-                      } finally {
-                        setCheckingPlagiarism(false);
-                      }
-                    }}
-                  >
-                    Run Plagiarism Check
-                  </Button>
+                  <ul className="text-sm text-text-muted mb-4 space-y-1 ml-4 list-disc">
+                    <li>Document-level TF-IDF similarity against all papers in database</li>
+                    <li>Sentence-level passage matching to find copied text</li>
+                    <li>Optional web search to detect external plagiarism</li>
+                  </ul>
+                  <div className="flex gap-2">
+                    <Button
+                      loading={checkingPlagiarism}
+                      onClick={async () => {
+                        setCheckingPlagiarism(true);
+                        try {
+                          const report = await plagiarismService.checkPaper(id);
+                          setPlagiarismReport(report);
+                          toast.success('Plagiarism check completed!');
+                        } catch (err) {
+                          toast.error(err.response?.data?.detail || 'Check failed');
+                        } finally {
+                          setCheckingPlagiarism(false);
+                        }
+                      }}
+                    >
+                      Run Plagiarism Check
+                    </Button>
+                    <Button
+                      variant="outline"
+                      loading={checkingPlagiarism}
+                      onClick={async () => {
+                        setCheckingPlagiarism(true);
+                        try {
+                          const report = await plagiarismService.checkPaper(id, true);
+                          setPlagiarismReport(report);
+                          toast.success('Full check with web search completed!');
+                        } catch (err) {
+                          toast.error(err.response?.data?.detail || 'Check failed');
+                        } finally {
+                          setCheckingPlagiarism(false);
+                        }
+                      }}
+                    >
+                      Run + Web Check
+                    </Button>
+                  </div>
                 </div>
               )}
             </Card>
