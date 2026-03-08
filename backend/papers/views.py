@@ -123,7 +123,12 @@ class PaymentViewSet(viewsets.GenericViewSet):
     """
     serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated]
-    parser_classes = [MultiPartParser, FormParser]
+
+    def get_parsers(self):
+        # upload-proof needs multipart, verify needs JSON
+        if getattr(self, 'action', None) == 'upload_proof':
+            return [MultiPartParser(), FormParser()]
+        return super().get_parsers()
 
     def get_payment(self):
         paper_id = self.kwargs.get('paper_pk')
